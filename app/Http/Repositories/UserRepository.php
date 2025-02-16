@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Repositories;
 
+  use App\Events\UserStatusChanged;
   use App\Http\Interfaces\UserRepositoryInterface;
   use App\Models\Course;
   use App\Models\User;
@@ -17,55 +18,64 @@ namespace App\Http\Repositories;
       }
       public function index()
     {
-        $users = $this->user::select("id", "name", "email","type","birthdate","status")->get();
-        return view('Pages.Users.list', compact('users'));
+        return $this->user::select("id", "name", "email", "type", "birthdate", "status")->get();
     }
     public function create()
     {
-        $Courses = $this->course::select("id", "name")->get();
-        return view('Pages.Users.create', compact('Courses'));
+        return $this->course::select("id", "name")->get();
     }
     public function store($request)
     {
-       $this->user::create([
+      $user = $this->user::create([
             'name' => $request->name,
             'email' => $request->email,
             "type" => $request->type,
             'birthdate' => $request->birthdate,
             'status' => $request->status,
         ]);
-        toast("user created successfully", "success");
-        return to_route('users.index');
+
+        if ($request->has('courses')) {
+            $user->courses()->sync($request->courses);
+        }
+
+        return $user;
     }
-    public function edit($user)
+
+      public function edit($user)
+      {
+          $courses = $this->course::select('id', 'name')->get();
+          return compact('user', 'courses');
+      }
+
+      public function update($request, $user)
+      {
+          $user->update([
+              'name' => $request->name,
+              'email' => $request->email,
+              'type' => $request->type,
+              'birthdate' => $request->birthdate,
+              'status' => $request->status,
+          ]);
+
+          if ($request->has('courses')) {
+              $user->courses()->sync($request->courses);
+          }
+
+          return $user;
+      }
+      public function destroy($user)
     {
-        return view('Pages.Users.edit', compact('user'));
-    }
-    public function update($request, $user)
-    {
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'type' => $request->type,
-            'birthdate' => $request->birthdate,
-            'status' => $request->status,
-        ]);
-        toast("user updated successfully", "success");
-        return to_route('users.index');
-    }
-    public function destroy($user)
-    {
-        $user->delete();
-        toast("user deleted successfully", "success");
-        return to_route('users.index');
+        return $user->delete();
     }
     public function changeStatus($user)
       {
-          $user->update([
-              'status' => $user->status === 'active' ? 'inactive' : 'active'
-          ]);
-          toast("User status updated successfully", "success");
-          return to_route('users.index');
+          $newStatus = $user->status === 'active' ? 'inactive' : 'active';
+          $user->update(['status' => $newStatus]);
+
+          event(new UserStatusChanged($user));
+
+          return $user;
+
       }
 
       public function export()

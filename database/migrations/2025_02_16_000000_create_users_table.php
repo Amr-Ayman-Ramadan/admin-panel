@@ -19,6 +19,7 @@ return new class extends Migration
             $table->enum('type', ['student', 'teacher']);
             $table->date('birthdate');
             $table->enum("status", ['active', 'inactive']);
+            $table->timestamp('completed_at')->nullable();
             $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();

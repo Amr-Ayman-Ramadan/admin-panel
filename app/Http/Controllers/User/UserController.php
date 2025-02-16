@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Http\Interfaces\UserRepositoryInterface;
 use App\Http\Requests\User\UserRequest;
+use App\Models\Course;
 use App\Models\User;
 
 class UserController extends Controller
@@ -17,36 +18,45 @@ class UserController extends Controller
     }
     public function index()
     {
-       return $this->UserRepositoryInterface->index();
-    }
+        $users = $this->UserRepositoryInterface->index();
+        return view('Pages.Users.list', compact('users'));    }
     public function create()
     {
-        return $this->UserRepositoryInterface->create();
+        $courses = $this->UserRepositoryInterface->create();
+        return view('Pages.Users.create', compact('courses'));
     }
     public function store(UserRequest $request)
     {
-        return $this->UserRepositoryInterface->store($request);
+        $this->UserRepositoryInterface->store($request);
+        toast("user created successfully", "success");
+        return to_route('users.index');
     }
     public function edit(User $user)
     {
-        return $this->UserRepositoryInterface->edit($user);
+        $data = $this->UserRepositoryInterface->edit($user);
+        return view('Pages.Users.edit', $data);
     }
+
     public function update(UserRequest $request, User $user)
     {
-        return $this->UserRepositoryInterface->update($request, $user);
+        $this->UserRepositoryInterface->update($request, $user);
+        toast("user updated successfully", "success");
+        return to_route('users.index');
     }
     public function destroy(User $user)
     {
-        return $this->UserRepositoryInterface->destroy($user);
-    }
+        $this->UserRepositoryInterface->destroy($user);
+        toast("user deleted successfully", "success");
+        return to_route('users.index');    }
     public function changeStatus(User $user)
     {
-        return $this->UserRepositoryInterface->changeStatus($user);
+        $this->UserRepositoryInterface->changeStatus($user);
+        toast("User status updated successfully", "success");
+        return to_route('users.index');
     }
 
     public function export()
     {
-        $this->UserRepositoryInterface->export();
+        return $this->UserRepositoryInterface->export();
     }
-
 }
